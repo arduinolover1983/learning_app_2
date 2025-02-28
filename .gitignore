@@ -1,0 +1,21 @@
+# Ignore macOS system files
+.DS_Store
+
+# Ignore Python cache & virtual environment
+__pycache__/
+*.pyc
+*.pyo
+venv/
+bin/
+lib/
+share/
+pyvenv.cfg
+
+# Ignore sensitive data (if applicable)
+.env
+
+# Ignore generated files
+*.xlsx
+*.csv
+
+
