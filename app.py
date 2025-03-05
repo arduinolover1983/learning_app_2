@@ -6,7 +6,7 @@ import random
 app = Flask(__name__)  # Start de flask web plugin
 
 # Load your data (assuming it's in a DataFrame)
-data = pd.read_csv("test_set2.csv", delimiter=";")  # Loads the CSV file into a pandas DataFrame with a custom delimiter (semicolon)
+data = pd.read_csv("words_set3.csv", delimiter=";")  # Loads the CSV file into a pandas DataFrame with a custom delimiter (semicolon)
 print(data)  # Prints the first few rows of the DataFrame to ensure it's loaded correctly
 
 @app.route("/")  # This defines the route for the home page, which is the root of the web application
