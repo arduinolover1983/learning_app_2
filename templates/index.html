@@ -5,44 +5,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flask Quiz</title>
-    <script src="/static/script.js" defer></script>
-    <style>
-        .form-group {
-            margin-bottom: 15px;
-        }
-        button {
-            margin: 5px;
-            padding: 8px;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/style.css">  <!-- Link to your CSS -->
+    <script src="/static/script.js" defer></script>     <!-- Link to Javascript -->
 </head>
 
 <body>
-    <h1>Demi leert Farsi Quiz 🚀</h1>
+    <div class="container">
+        <h1>Demi leert Farsi Quiz 🚀</h1>
 
-    <div class="form-group">
-        <label for="category">Kies een category:</label>
-        <select id="category">
-            {% for category in categorys %}
-            <option value="{{ category }}">{{ category }}</option>
-            {% endfor %}
-        </select>
+        <div class="form-group">
+            <label for="category">Kies een category:</label>
+            <select id="category">
+                {% for category in categorys %}
+                <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="mode">Choose Answer Mode:</label>
+            <select id="mode">
+                <option value="multiple_choice">Multiple Choice</option>
+                <option value="written">Written Answer</option>
+            </select>
+        </div>
+
+        <button onclick="startQuiz()">Get Question</button>
+
+        <p id="question"></p>
+        
+        <div id="answer-container"></div> <!-- Container for multiple-choice buttons or input field -->
+
+        <p id="feedback"></p>
     </div>
-
-    <div class="form-group">
-        <label for="mode">Choose Answer Mode:</label>
-        <select id="mode">
-            <option value="multiple_choice">Multiple Choice</option>
-            <option value="written">Written Answer</option>
-        </select>
-    </div>
-
-    <button onclick="startQuiz()">Get Question</button>
-
-    <p id="question"></p>
-    
-    <div id="answer-container"></div> <!-- Container for multiple-choice buttons or input field -->
-
-    <p id="feedback"></p>
 </body>
 </html>

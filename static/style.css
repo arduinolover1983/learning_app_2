@@ -1,10 +1,75 @@
+/* Apply a clean font and background */
 body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding: 20px;
+  font-family: 'Arial', sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+  text-align: center;
+  margin: 0;
+  padding: 0;
 }
 
+/* Center everything in a container */
+.container {
+  max-width: 600px;
+  margin: 40px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Headings */
+h1 {
+  font-size: 28px;
+  color: #005285;
+}
+
+/* Form group spacing */
+.form-group {
+  margin: 20px 0;
+}
+
+/* Style dropdowns */
+select {
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* Buttons */
 button {
-    padding: 10px;
-    margin-top: 10px;
+  background-color: #82c5ee;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background-color: #30a1e7;
+}
+
+/* Question styling */
+#question {
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+/* Answer container */
+#answer-container {
+  margin-top: 15px;
+}
+
+/* Feedback messages */
+#feedback {
+  font-weight: bold;
+  margin-top: 15px;
 }
