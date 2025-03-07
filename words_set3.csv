@@ -1,0 +1,90 @@
+﻿nummer;niveau;category;nederlands_woord;afghaans_woord
+1;1;begroeting;hallo;salaam
+2;1;begroeting;doei;khodavas
+3;1;begroeting;Hoe gaat het?;Goob astin?
+4;1;begroeting;Hou van jou;Doster daram
+5;1;begroeting;Goedemorgen;Sobh bakhair
+6;1;begroeting;Goedenavond;Shab bakhair
+7;1;begroeting;Alsjeblieft;Lotfan
+8;1;begroeting;Dank je wel;Tashakor
+9;1;begroeting;Ja;Bale
+10;1;begroeting;Nee;Nee
+11;1;begroeting;Welkom;Khosh amadid
+12;1;begroeting;Tot ziens;Bedrood
+13;1;basiszin;Hoe heet je?;Nām-e shoma chi ast?
+14;1;basiszin;Ik heet Demi;Nām-e ma Demi ast
+15;1;basiszin;Waar komt u vandaan?;Az koeja astin?
+16;1;basiszin;Ik kom uit Nederland;Ma as Holand astam
+17;1;basiszin;Ik kan een beetje Farsi.;Ma kame Farsi balad astam
+18;1;basiszin;Waar is de wc?;Tashnab koeja ast?
+19;1;basiszin;Hoeveel kost dit?;Chand ast ini?
+20;1;basiszin;Ik begrijp het niet;Ma namefimam
+21;1;basiszin;Ik ben verdwaald;Ma gom shodam
+22;1;basiszin;Ik heb dorst;Ma tashna astam
+23;1;basiszin;Ik heb honger;Ma goshna astam
+24;1;familie;moeder;mādar
+25;1;familie;vader;padar
+26;1;familie;broer;brādar
+27;1;familie;zus;khuar
+28;1;familie;opa;baba
+29;1;familie;oma;mother jan
+30;1;familie;oom;kaka
+31;1;familie;tante;khala
+32;1;familie;zoon;bacha
+33;1;familie;dochter;dokhtar
+34;1;familie;baby;baby
+35;1;kleur;rood;sorkh
+36;1;kleur;blauw;ābi
+37;1;kleur;groen;sabz
+38;1;kleur;geel;zard
+39;1;kleur;zwart;sjāh
+40;1;kleur;wit;safid
+41;1;cijfer;één;yak
+42;1;cijfer;twee;do
+43;1;cijfer;drie;ceh
+44;1;cijfer;vier;char
+45;1;cijfer;vijf;peinch
+46;1;cijfer;zes;shash
+47;1;cijfer;zeven;haft
+48;1;cijfer;acht;hasht
+49;1;cijfer;negen;noh
+50;1;cijfer;tien;dah
+51;1;dag;maandag;do shambe
+52;1;dag;dinsdag;ceh shambe
+53;1;dag;woensdag;char shambe
+54;1;dag;donderdag;peinch shambe
+55;1;dag;vrijdag;djoma
+56;1;dag;zaterdag;shambe
+57;1;dag;zondag;yak shambe
+58;1;eten;aubergine;banjan
+59;1;eten;thee;chai
+60;1;eten;koriander;gashnich
+61;1;eten;brood;nān
+62;1;eten;rijst;berenj
+63;1;eten;vlees;gosht
+64;1;eten;melk;shier
+65;1;eten;water;āb
+66;1;eten;appel;sib
+67;1;eten;banaan;kela
+68;1;eten;kip;morgh
+69;1;eten;vis;māhie
+70;1;eten;drankje;nushidanie
+70;1;eten;soep;soep
+71;3;werkwoord;eten;khordan
+72;3;werkwoord;drinken;nushidan
+73;3;werkwoord;gaan;raftan
+74;3;werkwoord;komen;āmadan
+75;3;werkwoord;zien;didan
+76;3;werkwoord;horen;shenidan
+77;3;werkwoord;praten;gab zadan
+78;3;werkwoord;begrijpen;fahmidan
+79;3;werkwoord;slapen;gow shodan
+80;3;werkwoord;werken;kar kardan
+81;1;bijvoeglijk;groot;kalan
+82;1;bijvoeglijk;klein;gord
+83;1;bijvoeglijk;mooi;magboel
+84;1;bijvoeglijk;lelijk;badrang
+85;1;bijvoeglijk;snel;teez
+86;1;bijvoeglijk;langzaam;āsta
+87;1;bijvoeglijk;nieuw;now
+88;1;bijvoeglijk;oud;kohna
