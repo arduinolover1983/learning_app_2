@@ -63,10 +63,30 @@ button:hover {
   margin-top: 20px;
 }
 
-/* Answer container */
+/* Style multiple-choice buttons with spacing */
 #answer-container {
-  margin-top: 15px;
+  display: flex;  /* Arrange buttons in a row */
+  justify-content: center;  /* Center buttons */
+  gap: 15px;  /* Add space between buttons */
+  flex-wrap: wrap;  /* Allow wrapping if needed */
 }
+
+/* Style for buttons */
+#answer-container button {
+  padding: 10px 15px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.3s;
+  background-color: #82c5ee;
+  color: white;
+  border: none;
+}
+
+#answer-container button:hover {
+  background-color: #30a1e7;
+}
+
 
 /* Feedback messages */
 #feedback {
