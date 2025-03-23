@@ -17,10 +17,30 @@ function startQuiz() {
             document.getElementById("question").innerText = `Translate: ${data.afghan_word}`;
             correctAnswer = data.correct_translation;
 
-            // Check if multiple-choice mode is selected
-            if (mode === "multiple_choice") {
+            // Clear previous answer options or audio player
+            document.getElementById("answer-container").innerHTML = '';
+            document.getElementById("feedback").innerText = '';
+
+            // Check if the mode is "listen_and_choose"
+            if (mode === "listen_and_choose") {
+                if (data.audio) {
+                    // Create an audio element for listening mode
+                    const audioElement = document.createElement("audio");
+                    audioElement.setAttribute("controls", "");
+                    audioElement.setAttribute("src", data.audio); // Set the audio source
+                    document.getElementById("answer-container").appendChild(audioElement);
+                } else {
+                    // If no audio, provide feedback
+                    document.getElementById("feedback").innerText = "No audio available for this word.";
+                }
+
+                // Display the multiple-choice options
                 displayMultipleChoice(data.choices);
-            } else {
+            } else if (mode === "multiple_choice") {
+                // Show multiple-choice buttons in the multiple-choice mode
+                displayMultipleChoice(data.choices);
+            } else if (mode === "written") {
+                // Show written input if mode is written
                 displayWrittenInput();
             }
         }
@@ -28,14 +48,19 @@ function startQuiz() {
 }
 
 function displayMultipleChoice(choices) {
-    let answerContainer = document.getElementById("answer-container");
-    answerContainer.innerHTML = ""; // Clear previous answers
+    const container = document.getElementById("answer-container");
 
     choices.forEach(choice => {
-        let button = document.createElement("button");
+        const button = document.createElement("button");
         button.innerText = choice;
-        button.onclick = function () { checkAnswer(choice); };
-        answerContainer.appendChild(button);
+        button.onclick = function () {
+            if (choice === correctAnswer) {
+                document.getElementById("feedback").innerText = "Correct!";
+            } else {
+                document.getElementById("feedback").innerText = "Incorrect. Try again!";
+            }
+        };
+        container.appendChild(button);
     });
 }
 
@@ -45,17 +70,6 @@ function displayWrittenInput() {
         <input type="text" id="answer" placeholder="Type your answer">
         <button onclick="submitAnswer()">Submit</button>
     `;
-}
-
-function checkAnswer(userAnswer) {
-    let feedback = document.getElementById("feedback");
-    if (userAnswer === correctAnswer) {
-        feedback.innerText = "Correct!";
-        feedback.style.color = "green";
-    } else {
-        feedback.innerText = `Incorrect! The correct answer was: ${correctAnswer}`;
-        feedback.style.color = "red";
-    }
 }
 
 function submitAnswer() {

@@ -24,19 +24,33 @@
 
         <div class="form-group">
             <label for="mode">Choose Answer Mode:</label>
-            <select id="mode">
+            <select id="mode" onchange="toggleAudio()">
                 <option value="multiple_choice">Multiple Choice</option>
                 <option value="written">Written Answer</option>
+                <option value="listen_and_choose">Listen and Choose</option>
             </select>
         </div>
 
         <button onclick="startQuiz()">Get Question</button>
 
         <p id="question"></p>
-        
+
         <div id="answer-container"></div> <!-- Container for multiple-choice buttons or input field -->
 
         <p id="feedback"></p>
     </div>
+
+    <script>
+        function toggleAudio() {
+            let mode = document.getElementById("mode").value;
+            let audioContainer = document.getElementById("audio-container");
+
+            if (mode === "listen_and_choose") {
+                audioContainer.style.display = "block";
+            } else {
+                audioContainer.style.display = "none";
+            }
+        }
+    </script>
 </body>
 </html>
