@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Farsi Learning</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container dashboard-container">
+        <div class="header">
+            <h1>📊 Dashboard</h1>
+            <a href="/logout" class="btn-logout">Logout</a>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>All-Time Score</h3>
+                <p class="stat-value">{{ total_score }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Weekly Score</h3>
+                <p class="stat-value">{{ weekly_score }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Categories</h3>
+                <p class="stat-value">{{ categories|length }}</p>
+            </div>
+        </div>
+        
+        <h2>Your Progress</h2>
+        <div class="progress-list">
+            {% for cat in categories %}
+            <div class="progress-item">
+                <span>{{ cat }}</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-{{ cat }}"></div>
+                </div>
+                <span id="progress-text-{{ cat }}">0%</span>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="action-buttons">
+            <a href="/quiz" class="btn-primary">Start Quiz 🎯</a>
+            <a href="/leaderboard" class="btn-secondary">View Leaderboard 🏆</a>
+        </div>
+    </div>
+
+    <script>
+        // Load progress for each category
+        const categories = {{ categories | tojson }};
+        
+        categories.forEach(async (category) => {
+            try {
+                const response = await fetch(`/api/get_progress?category=${category}`);
+                const data = await response.json();
+                
+                const percent = data.words_completed > 0 
+                    ? Math.round((data.words_learned / data.words_completed) * 100) 
+                    : 0;
+                
+                document.getElementById(`progress-${category}`).style.width = percent + '%';
+                document.getElementById(`progress-text-${category}`).textContent = percent + '%';
+            } catch (error) {
+                console.error('Error loading progress:', error);
+            }
+        });
+    </script>
+</body>
+</html>

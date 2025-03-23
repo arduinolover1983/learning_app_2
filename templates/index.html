@@ -10,6 +10,16 @@
 </head>
 
 <body>
+  <header>
+    {% if current_user.is_authenticated %}
+      Logged in as {{ current_user.username }}
+      <a href="{{ url_for('logout') }}">Logout</a>
+    {% else %}
+      <a href="{{ url_for('login') }}">Login</a>
+      <a href="{{ url_for('register') }}">Register</a>
+    {% endif %}
+  </header>d
+
     <div class="container">
         <h1>Demi leert Farsi Quiz 🚀</h1>
 
@@ -24,19 +34,33 @@
 
         <div class="form-group">
             <label for="mode">Choose Answer Mode:</label>
-            <select id="mode">
+            <select id="mode" onchange="toggleAudio()">
                 <option value="multiple_choice">Multiple Choice</option>
                 <option value="written">Written Answer</option>
+                <option value="listen_and_choose">Listen and Choose</option>
             </select>
         </div>
 
         <button onclick="startQuiz()">Get Question</button>
 
         <p id="question"></p>
-        
+
         <div id="answer-container"></div> <!-- Container for multiple-choice buttons or input field -->
 
         <p id="feedback"></p>
     </div>
+
+    <script>
+        function toggleAudio() {
+            let mode = document.getElementById("mode").value;
+            let audioContainer = document.getElementById("audio-container");
+
+            if (mode === "listen_and_choose") {
+                audioContainer.style.display = "block";
+            } else {
+                audioContainer.style.display = "none";
+            }
+        }
+    </script>
 </body>
 </html>

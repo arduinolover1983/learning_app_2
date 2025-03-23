@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Farsi Learning Quiz</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container auth-container">
+        <h1>Demi leert Farsi 🚀</h1>
+        <h2>Create Account</h2>
+        
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required minlength="6">
+            </div>
+            
+            <button type="submit" class="btn-primary">Register</button>
+            <p id="message" style="display: none;"></p>
+        </form>
+        
+        <p>Already have an account? <a href="/login">Login here</a></p>
+    </div>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const result = await response.json();
+                const msgEl = document.getElementById('message');
+                
+                if (response.ok) {
+                    msgEl.textContent = 'Registration successful! Redirecting to login...';
+                    msgEl.style.color = 'green';
+                    msgEl.style.display = 'block';
+                    setTimeout(() => window.location.href = '/login', 2000);
+                } else {
+                    msgEl.textContent = result.error;
+                    msgEl.style.color = 'red';
+                    msgEl.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

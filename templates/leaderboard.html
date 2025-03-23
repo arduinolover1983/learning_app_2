@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - Farsi Learning</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container leaderboard-container">
+        <div class="header">
+            <h1>🏆 Leaderboard</h1>
+            <a href="/dashboard" class="btn-back">← Back</a>
+        </div>
+        
+        <div class="leaderboard-tabs">
+            <button class="tab-button active" onclick="showLeaderboard('weekly')">Weekly 📅</button>
+            <button class="tab-button" onclick="showLeaderboard('alltime')">All-Time 🌟</button>
+        </div>
+        
+        <table id="leaderboard" class="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Username</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function showLeaderboard(type) {
+            // Update tabs
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const endpoint = type === 'weekly' ? '/api/leaderboard/weekly' : '/api/leaderboard/alltime';
+            
+            try {
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                
+                const tbody = document.getElementById('leaderboard-body');
+                tbody.innerHTML = '';
+                
+                data.forEach(entry => {
+                    const row = document.createElement('tr');
+                    row.className = entry.is_current_user ? 'current-user' : '';
+                    row.innerHTML = `
+                        <td>${entry.rank}</td>
+                        <td>${entry.username} ${entry.is_current_user ? '👤' : ''}</td>
+                        <td>${entry.score}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+            }
+        }
+        
+        // Load weekly by default
+        showLeaderboard('weekly');
+    </script>
+</body>
+</html>

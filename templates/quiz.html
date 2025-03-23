@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - Farsi Learning</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="quiz-header">
+            <h1>Demi leert Farsi Quiz 🚀</h1>
+            <a href="/dashboard" class="btn-back">← Back to Dashboard</a>
+        </div>
+
+        <div class="form-group">
+            <label for="category">Kies een category:</label>
+            <select id="category">
+                {% for category in categorys %}
+                <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="mode">Choose Answer Mode:</label>
+            <select id="mode">
+                <option value="multiple_choice">Multiple Choice</option>
+                <option value="written">Written Answer</option>
+                <option value="listen_and_choose">Listen and Choose</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="includeRepeats">
+                <input type="checkbox" id="includeRepeats" checked>
+                Include words I got wrong
+            </label>
+        </div>
+
+        <button onclick="startQuiz()" class="btn-primary">Get Question</button>
+
+        <p id="question"></p>
+        <div id="answer-container"></div>
+        <p id="feedback"></p>
+        
+        <div id="score-display">Score: 0</div>
+    </div>
+
+    <script>
+        let correctAnswer = "";
+        let currentWordId = "";
+        let currentCategory = "";
+        let score = 0;
+
+        function startQuiz() {
+            let category = document.getElementById("category").value;
+            let mode = document.getElementById("mode").value;
+            let includeRepeats = document.getElementById("includeRepeats").checked;
+            
+            currentCategory = category;
+
+            fetch("/get_question", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    category: category, 
+                    mode: mode,
+                    include_repeats: includeRepeats 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    document.getElementById("question").innerText = `Translate: ${data.afghan_word}`;
+                    correctAnswer = data.correct_translation;
+                    currentWordId = data.word_id;
+
+                    document.getElementById("answer-container").innerHTML = '';
+                    document.getElementById("feedback").innerText = '';
+
+                    if (mode === "listen_and_choose") {
+                        if (data.audio) {
+                            const audioElement = document.createElement("audio");
+                            audioElement.setAttribute("controls", "");
+                            audioElement.setAttribute("src", data.audio);
+                            document.getElementById("answer-container").appendChild(audioElement);
+                        }
+                        displayMultipleChoice(data.choices);
+                    } else if (mode === "multiple_choice") {
+                        displayMultipleChoice(data.choices);
+                    } else if (mode === "written") {
+                        displayWrittenInput();
+                    }
+                }
+            });
+        }
+
+        function displayMultipleChoice(choices) {
+            const container = document.getElementById("answer-container");
+            choices.forEach(choice => {
+                const button = document.createElement("button");
+                button.innerText = choice;
+                button.onclick = function () {
+                    submitAnswer(choice);
+                };
+                container.appendChild(button);
+            });
+        }
+
+        function displayWrittenInput() {
+            let answerContainer = document.getElementById("answer-container");
+            answerContainer.innerHTML = `
+                <input type="text" id="answer" placeholder="Type your answer" autofocus>
+                <button onclick="submitAnswer(document.getElementById('answer').value)">Submit</button>
+            `;
+        }
+
+        function submitAnswer(userAnswer) {
+            fetch("/submit_answer", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    category: currentCategory,
+                    word_id: currentWordId,
+                    user_answer: userAnswer,
+                    correct_answer: correctAnswer
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const feedback = document.getElementById("feedback");
+                if (data.is_correct) {
+                    feedback.innerText = "✓ Correct!";
+                    feedback.style.color = "green";
+                    score = data.total_score;
+                } else {
+                    feedback.innerText = `✗ ${data.message}`;
+                    feedback.style.color = "red";
+                }
+                document.getElementById("score-display").innerText = `Score: ${score}`;
+                
+                // Auto-load next question after delay
+                setTimeout(() => startQuiz(), 2000);
+            });
+        }
+    </script>
+</body>
+</html>
