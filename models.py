@@ -18,6 +18,8 @@ class User(UserMixin, db.Model):
     # Relationships
     quiz_attempts = db.relationship('QuizAttempt', backref='user', lazy=True, cascade='all, delete-orphan')
     progress_records = db.relationship('ProgressRecord', backref='user', lazy=True, cascade='all, delete-orphan')
+
+    words_to_repeat = db.relationship('WordToRepeat', backref='user', lazy=True, cascade='all, delete-orphan')
     
     def set_password(self, password):
         """Hash and store password"""
