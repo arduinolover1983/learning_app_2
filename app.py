@@ -358,5 +358,10 @@ def internal_error(error):
 
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+        except Exception as e:
+            print(f"Database initialization error: {e}")
+            db.drop_all()  # Reset if needed
+            db.create_all()
     app.run(host="0.0.0.0", port=5000, debug=True)
