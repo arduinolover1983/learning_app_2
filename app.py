@@ -12,6 +12,9 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-change-this'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///learning_app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'connect_args': {'timeout': 15}
+}
 
 # Initialize extensions
 db.init_app(app)
@@ -40,6 +43,24 @@ except Exception as e:
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# ==================== DATABASE INITIALIZATION ====================
+
+def init_db():
+    """Initialize database - call this before first request"""
+    try:
+        with app.app_context():
+            # Drop all existing tables (fresh start)
+            db.drop_all()
+            logger.info("✓ Dropped old tables")
+            
+            # Create all tables
+            db.create_all()
+            logger.info("✓ Created all database tables successfully")
+            
+    except Exception as e:
+        logger.error(f"✗ Database initialization failed: {e}")
+        raise
+
 # ==================== Authentication Routes ====================
 
 @app.route("/")
@@ -55,6 +76,8 @@ def register():
             username = request.json.get("username")
             email = request.json.get("email")
             password = request.json.get("password")
+            
+            logger.debug(f"Registration attempt: username={username}, email={email}")
             
             # Validation
             if not username or not email or not password:
@@ -77,7 +100,7 @@ def register():
         
         except Exception as e:
             db.session.rollback()
-            logger.error(f"✗ Registration error: {e}")
+            logger.error(f"✗ Registration error: {e}", exc_info=True)
             return jsonify({"error": f"Registration failed: {str(e)}"}), 500
     
     return render_template("register.html")
@@ -92,7 +115,12 @@ def login():
             username = request.json.get("username")
             password = request.json.get("password")
             
+            logger.debug(f"Login attempt: username={username}")
+            
+            # Check if user exists
             user = User.query.filter_by(username=username).first()
+            logger.debug(f"User found: {user is not None}")
+            
             if user and user.check_password(password):
                 login_user(user, remember=True)
                 logger.info(f"✓ User logged in: {username}")
@@ -102,7 +130,7 @@ def login():
             return jsonify({"error": "Invalid username or password"}), 401
         
         except Exception as e:
-            logger.error(f"✗ Login error: {e}")
+            logger.error(f"✗ Login error: {e}", exc_info=True)
             return jsonify({"error": f"Login failed: {str(e)}"}), 500
     
     return render_template("login.html")
@@ -136,7 +164,7 @@ def dashboard():
                              categories=categories,
                              progress_data=progress_data)
     except Exception as e:
-        logger.error(f"✗ Dashboard error: {e}")
+        logger.error(f"✗ Dashboard error: {e}", exc_info=True)
         return jsonify({"error": "Dashboard error"}), 500
 
 @app.route("/api/get_progress")
@@ -159,7 +187,7 @@ def get_progress():
             "words_completed": progress.words_completed
         })
     except Exception as e:
-        logger.error(f"✗ Get progress error: {e}")
+        logger.error(f"✗ Get progress error: {e}", exc_info=True)
         return jsonify({"error": "Error fetching progress"}), 500
 
 # ==================== Quiz Routes ====================
@@ -198,7 +226,6 @@ def get_question():
         
         # Prioritize words to repeat
         if include_repeats and words_to_repeat:
-            # 70% chance to show a word to repeat, 30% chance normal word
             if random.random() < 0.7:
                 repeat_word = random.choice(words_to_repeat)
                 word_data = category_data[category_data.index == int(repeat_word.word_id) - 1]
@@ -212,7 +239,7 @@ def get_question():
             word = category_data.sample(1).iloc[0]
         
         correct_answer = word["nederlands_woord"]
-        word_id = str(word.name)  # Index from CSV
+        word_id = str(word.name)
         
         # Generate multiple-choice answers
         wrong_answers = category_data[category_data["nederlands_woord"] != correct_answer] \
@@ -244,7 +271,7 @@ def get_question():
             "word_id": word_id
         })
     except Exception as e:
-        logger.error(f"✗ Get question error: {e}")
+        logger.error(f"✗ Get question error: {e}", exc_info=True)
         return jsonify({"error": "Error fetching question"}), 500
 
 @app.route("/submit_answer", methods=["POST"])
@@ -303,7 +330,6 @@ def submit_answer():
             else:
                 repeat_entry.attempt_count += 1
         else:
-            # Remove from repeat list if they got it right
             if repeat_entry:
                 db.session.delete(repeat_entry)
         
@@ -316,7 +342,7 @@ def submit_answer():
         })
     except Exception as e:
         db.session.rollback()
-        logger.error(f"✗ Submit answer error: {e}")
+        logger.error(f"✗ Submit answer error: {e}", exc_info=True)
         return jsonify({"error": "Error submitting answer"}), 500
 
 # ==================== Leaderboard Routes ====================
@@ -334,7 +360,6 @@ def api_leaderboard_weekly():
     try:
         week_ago = datetime.utcnow() - timedelta(days=7)
         
-        # Query all users with their weekly scores
         users_scores = []
         users = User.query.all()
         
@@ -352,16 +377,14 @@ def api_leaderboard_weekly():
                     "is_current_user": user.id == current_user.id
                 })
         
-        # Sort by score descending
         users_scores.sort(key=lambda x: x["score"], reverse=True)
         
-        # Add rank
         for i, entry in enumerate(users_scores, 1):
             entry["rank"] = i
         
         return jsonify(users_scores)
     except Exception as e:
-        logger.error(f"✗ Weekly leaderboard error: {e}")
+        logger.error(f"✗ Weekly leaderboard error: {e}", exc_info=True)
         return jsonify({"error": "Error fetching leaderboard"}), 500
 
 @app.route("/api/leaderboard/alltime")
@@ -381,16 +404,14 @@ def api_leaderboard_alltime():
                     "is_current_user": user.id == current_user.id
                 })
         
-        # Sort by score descending
         users_scores.sort(key=lambda x: x["score"], reverse=True)
         
-        # Add rank
         for i, entry in enumerate(users_scores, 1):
             entry["rank"] = i
         
         return jsonify(users_scores)
     except Exception as e:
-        logger.error(f"✗ All-time leaderboard error: {e}")
+        logger.error(f"✗ All-time leaderboard error: {e}", exc_info=True)
         return jsonify({"error": "Error fetching leaderboard"}), 500
 
 @app.route("/api/words_to_repeat")
@@ -410,7 +431,7 @@ def api_words_to_repeat():
             "words": [{"word_id": w.word_id, "attempts": w.attempt_count} for w in words_to_repeat]
         })
     except Exception as e:
-        logger.error(f"✗ Words to repeat error: {e}")
+        logger.error(f"✗ Words to repeat error: {e}", exc_info=True)
         return jsonify({"error": "Error fetching words"}), 500
 
 # ==================== Error Handlers ====================
@@ -421,22 +442,12 @@ def not_found(error):
 
 @app.errorhandler(500)
 def internal_error(error):
-    logger.error(f"✗ 500 Error: {error}")
+    logger.error(f"✗ 500 Error: {error}", exc_info=True)
     db.session.rollback()
     return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == "__main__":
-    with app.app_context():
-        try:
-            db.create_all()
-            logger.info("✓ Database initialized successfully")
-        except Exception as e:
-            logger.error(f"✗ Database initialization error: {e}")
-            try:
-                db.drop_all()
-                db.create_all()
-                logger.info("✓ Database reset and recreated")
-            except Exception as reset_error:
-                logger.error(f"✗ Failed to reset database: {reset_error}")
+    # Initialize database before running the app
+    init_db()
     
     app.run(host="0.0.0.0", port=5000, debug=True)
