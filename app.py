@@ -1,15 +1,15 @@
-from flask import Flask, render_template, request, jsonify, url_for, redirect, session
+from flask import Flask, render_template, request, jsonify, url_for, redirect
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash
 import pandas as pd
 import random
 import os
 from datetime import datetime, timedelta
+from sqlalchemy import distinct, func
 from models import db, User, QuizAttempt, ProgressRecord, WordToRepeat
 import logging
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-change-this'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-me')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///learning_app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
@@ -39,27 +39,53 @@ except Exception as e:
     logger.error(f"✗ Error loading CSV: {e}")
     data = pd.DataFrame()
 
+
+def get_word_by_id(word_id, expected_category=None):
+    """Look up a word by its CSV row index and optionally validate its category."""
+    try:
+        word_index = int(word_id)
+    except (TypeError, ValueError):
+        return None
+
+    if word_index not in data.index:
+        return None
+
+    word = data.loc[word_index]
+    if expected_category and word["category"] != expected_category:
+        return None
+
+    return word
+
+
+def refresh_progress(user_id, category):
+    """Recalculate progress from recorded attempts instead of raw submission counts."""
+    progress = ProgressRecord.query.filter_by(
+        user_id=user_id,
+        category=category
+    ).first()
+
+    if not progress:
+        progress = ProgressRecord(user_id=user_id, category=category)
+        db.session.add(progress)
+
+    words_completed = db.session.query(func.count(distinct(QuizAttempt.word_id))).filter(
+        QuizAttempt.user_id == user_id,
+        QuizAttempt.category == category
+    ).scalar() or 0
+
+    words_learned = db.session.query(func.count(distinct(QuizAttempt.word_id))).filter(
+        QuizAttempt.user_id == user_id,
+        QuizAttempt.category == category,
+        QuizAttempt.is_correct.is_(True)
+    ).scalar() or 0
+
+    progress.words_completed = words_completed
+    progress.words_learned = words_learned
+    return progress
+
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
-
-# ==================== DATABASE INITIALIZATION ====================
-
-def init_db():
-    """Initialize database - call this before first request"""
-    try:
-        with app.app_context():
-            # Drop all existing tables (fresh start)
-            db.drop_all()
-            logger.info("✓ Dropped old tables")
-            
-            # Create all tables
-            db.create_all()
-            logger.info("✓ Created all database tables successfully")
-            
-    except Exception as e:
-        logger.error(f"✗ Database initialization failed: {e}")
-        raise
+    return db.session.get(User, int(user_id))
 
 # ==================== Authentication Routes ====================
 
@@ -228,9 +254,9 @@ def get_question():
         if include_repeats and words_to_repeat:
             if random.random() < 0.7:
                 repeat_word = random.choice(words_to_repeat)
-                word_data = category_data[category_data.index == int(repeat_word.word_id) - 1]
-                if not word_data.empty:
-                    word = word_data.iloc[0]
+                repeated_word = get_word_by_id(repeat_word.word_id, selected_category)
+                if repeated_word is not None:
+                    word = repeated_word
                 else:
                     word = category_data.sample(1).iloc[0]
             else:
@@ -259,7 +285,6 @@ def get_question():
             return jsonify({
                 "audio": audio_url,
                 "choices": choices,
-                "correct_translation": correct_answer,
                 "word_id": word_id,
                 "afghan_word": word["afghaans_woord"]
             })
@@ -267,7 +292,6 @@ def get_question():
         return jsonify({
             "afghan_word": word["afghaans_woord"],
             "choices": choices,
-            "correct_translation": correct_answer,
             "word_id": word_id
         })
     except Exception as e:
@@ -283,7 +307,12 @@ def submit_answer():
         category = data_json.get("category")
         word_id = data_json.get("word_id")
         user_answer = data_json.get("user_answer", "").strip().lower()
-        correct_answer = data_json.get("correct_answer", "").strip().lower()
+        word = get_word_by_id(word_id, category)
+
+        if not category or word is None:
+            return jsonify({"error": "Invalid question payload"}), 400
+
+        correct_answer = str(word["nederlands_woord"]).strip().lower()
         
         is_correct = user_answer == correct_answer
         
@@ -298,19 +327,8 @@ def submit_answer():
         )
         db.session.add(attempt)
         
-        # Update progress
-        progress = ProgressRecord.query.filter_by(
-            user_id=current_user.id,
-            category=category
-        ).first()
-        
-        if not progress:
-            progress = ProgressRecord(user_id=current_user.id, category=category)
-            db.session.add(progress)
-        
-        progress.words_completed += 1
-        if is_correct:
-            progress.words_learned = max(progress.words_learned, progress.words_completed)
+        # Update progress from authoritative quiz history.
+        refresh_progress(current_user.id, category)
         
         # Handle word repeat tracking
         repeat_entry = WordToRepeat.query.filter_by(
@@ -330,6 +348,7 @@ def submit_answer():
             else:
                 repeat_entry.attempt_count += 1
         else:
+            # Remove from repeat list if they got it right
             if repeat_entry:
                 db.session.delete(repeat_entry)
         
@@ -447,7 +466,6 @@ def internal_error(error):
     return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == "__main__":
-    # Initialize database before running the app
-    init_db()
-    
+    with app.app_context():
+        db.create_all()
     app.run(host="0.0.0.0", port=5000, debug=True)

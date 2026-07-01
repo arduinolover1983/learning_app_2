@@ -48,7 +48,6 @@
     </div>
 
     <script>
-        let correctAnswer = "";
         let currentWordId = "";
         let currentCategory = "";
         let score = 0;
@@ -75,7 +74,6 @@
                     alert(data.error);
                 } else {
                     document.getElementById("question").innerText = `Translate: ${data.afghan_word}`;
-                    correctAnswer = data.correct_translation;
                     currentWordId = data.word_id;
 
                     document.getElementById("answer-container").innerHTML = '';
@@ -125,8 +123,7 @@
                 body: JSON.stringify({
                     category: currentCategory,
                     word_id: currentWordId,
-                    user_answer: userAnswer,
-                    correct_answer: correctAnswer
+                    user_answer: userAnswer
                 })
             })
             .then(response => response.json())

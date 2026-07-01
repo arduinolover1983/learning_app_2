@@ -31,17 +31,16 @@ class User(UserMixin, db.Model):
     
     def get_total_score(self):
         """Calculate total score from all quiz attempts"""
-        attempts = QuizAttempt.query.filter_by(user_id=self.id).all()
-        return sum(1 for attempt in attempts if attempt.is_correct)
+        return QuizAttempt.query.filter_by(user_id=self.id, is_correct=True).count()
     
     def get_weekly_score(self):
         """Calculate score from the last 7 days"""
         week_ago = datetime.utcnow() - timedelta(days=7)
-        attempts = QuizAttempt.query.filter(
+        return QuizAttempt.query.filter(
             QuizAttempt.user_id == self.id,
-            QuizAttempt.created_at >= week_ago
-        ).all()
-        return sum(1 for attempt in attempts if attempt.is_correct)
+            QuizAttempt.created_at >= week_ago,
+            QuizAttempt.is_correct.is_(True)
+        ).count()
 
 
 class QuizAttempt(db.Model):
