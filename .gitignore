@@ -6,9 +6,11 @@ __pycache__/
 *.pyc
 *.pyo
 venv/
+.venv/
 bin/
 lib/
 share/
+include/
 pyvenv.cfg
 
 # Ignore sensitive data (if applicable)
@@ -17,5 +19,6 @@ pyvenv.cfg
 # Ignore generated files
 *.xlsx
 *.csv
-
-
+*.db
+instance/
+var/

@@ -1,14 +1,14 @@
-from flask import Flask, render_template, request, jsonify, url_for, redirect, session
+from flask import Flask, render_template, request, jsonify, url_for, redirect
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash
 import pandas as pd
 import random
 import os
 from datetime import datetime, timedelta
+from sqlalchemy import distinct, func
 from models import db, User, QuizAttempt, ProgressRecord, WordToRepeat
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-change-this'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-me')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///learning_app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -21,9 +21,53 @@ login_manager.login_view = 'login'
 # Load the CSV file
 data = pd.read_csv("words_set3.csv", delimiter=";")
 
+
+def get_word_by_id(word_id, expected_category=None):
+    """Look up a word by its CSV row index and optionally validate its category."""
+    try:
+        word_index = int(word_id)
+    except (TypeError, ValueError):
+        return None
+
+    if word_index not in data.index:
+        return None
+
+    word = data.loc[word_index]
+    if expected_category and word["category"] != expected_category:
+        return None
+
+    return word
+
+
+def refresh_progress(user_id, category):
+    """Recalculate progress from recorded attempts instead of raw submission counts."""
+    progress = ProgressRecord.query.filter_by(
+        user_id=user_id,
+        category=category
+    ).first()
+
+    if not progress:
+        progress = ProgressRecord(user_id=user_id, category=category)
+        db.session.add(progress)
+
+    words_completed = db.session.query(func.count(distinct(QuizAttempt.word_id))).filter(
+        QuizAttempt.user_id == user_id,
+        QuizAttempt.category == category
+    ).scalar() or 0
+
+    words_learned = db.session.query(func.count(distinct(QuizAttempt.word_id))).filter(
+        QuizAttempt.user_id == user_id,
+        QuizAttempt.category == category,
+        QuizAttempt.is_correct.is_(True)
+    ).scalar() or 0
+
+    progress.words_completed = words_completed
+    progress.words_learned = words_learned
+    return progress
+
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 # ==================== Authentication Routes ====================
 
@@ -153,9 +197,9 @@ def get_question():
         # 70% chance to show a word to repeat, 30% chance normal word
         if random.random() < 0.7:
             repeat_word = random.choice(words_to_repeat)
-            word_data = category_data[category_data.index == int(repeat_word.word_id) - 1]
-            if not word_data.empty:
-                word = word_data.iloc[0]
+            repeated_word = get_word_by_id(repeat_word.word_id, selected_category)
+            if repeated_word is not None:
+                word = repeated_word
             else:
                 word = category_data.sample(1).iloc[0]
         else:
@@ -184,7 +228,6 @@ def get_question():
         return jsonify({
             "audio": audio_url,
             "choices": choices,
-            "correct_translation": correct_answer,
             "word_id": word_id,
             "afghan_word": word["afghaans_woord"]
         })
@@ -192,7 +235,6 @@ def get_question():
     return jsonify({
         "afghan_word": word["afghaans_woord"],
         "choices": choices,
-        "correct_translation": correct_answer,
         "word_id": word_id
     })
 
@@ -204,7 +246,12 @@ def submit_answer():
     category = data_json.get("category")
     word_id = data_json.get("word_id")
     user_answer = data_json.get("user_answer", "").strip().lower()
-    correct_answer = data_json.get("correct_answer", "").strip().lower()
+    word = get_word_by_id(word_id, category)
+
+    if not category or word is None:
+        return jsonify({"error": "Invalid question payload"}), 400
+
+    correct_answer = str(word["nederlands_woord"]).strip().lower()
     
     is_correct = user_answer == correct_answer
     
@@ -219,19 +266,8 @@ def submit_answer():
     )
     db.session.add(attempt)
     
-    # Update progress
-    progress = ProgressRecord.query.filter_by(
-        user_id=current_user.id,
-        category=category
-    ).first()
-    
-    if not progress:
-        progress = ProgressRecord(user_id=current_user.id, category=category)
-        db.session.add(progress)
-    
-    progress.words_completed += 1
-    if is_correct:
-        progress.words_learned = max(progress.words_learned, progress.words_completed)
+    # Update progress from authoritative quiz history.
+    refresh_progress(current_user.id, category)
     
     # Handle word repeat tracking
     repeat_entry = WordToRepeat.query.filter_by(
